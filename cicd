@@ -1,0 +1,26 @@
+node{
+   stage('pipeline project'){
+     git 'https://github.com/damodaranj/my-app.git'
+   }
+   stage(' maven package'){
+
+      def mvnHome =  tool name: 'maven3', type: 'maven'   
+      sh "${mvnHome}/bin/mvn clean package"
+	  sh 'mv target/image*.war target/newapp.war'
+   }
+    stage('Build Docker Imager'){
+   sh 'docker build -t nancymarya/image'
+   }
+stage('Build Docker Image'){
+   sh 'docker build -t nancymarya/image'
+   }
+   stage('Docker Image Push'){
+   withCredentials([string(credentialsId: 'dockerPass', variable: 'dockerPassword')]) {
+   sh "docker login -u nancymarya -p ${dockerPassword}"
+    }
+   sh 'docker push nancymarya/image'
+   }
+  stage('Docker deployment'){
+   sh 'docker run -d -p 8090:8080 --name tomcattest nancymarya/image' 
+   }
+}
